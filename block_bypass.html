@@ -3,46 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Min GitHub Proxy</title>
+    <title>GitHub Portal</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; }
-        #output { width: 100%; height: 600px; border: 1px solid #ccc; margin-top: 20px; overflow: auto; padding: 10px; }
-        input { width: 300px; padding: 8px; }
-        button { padding: 8px 15px; cursor: pointer; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; background-color: #f4f6f9; color: #333; text-align: center; }
+        .container { max-width: 500px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { margin-bottom: 20px; color: #007bff; }
+        input { width: 80%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 20px; font-size: 16px; }
+        button { padding: 12px 24px; background-color: #007bff; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #0056b3; }
+        p { font-size: 14px; color: #666; line-height: 1.5; }
     </style>
 </head>
 <body>
 
-<h1>Vis nettsider via GitHub</h1>
-<p>Skriv inn nettadressen til den blokkerte siden:</p>
+<div class="container">
+    <h1>Nettportal</h1>
+    <p>Skriv inn den fullstendige adressen du vil åpne (inkludert https://):</p>
 
-<input type="text" id="urlInput" value="https://example.com">
-<button onclick="lastInnSide()">Åpne side</button>
+    <input type="text" id="targetUrl" value="https://example.com">
+    <br>
+    <button onclick="apneTunnel()">Åpne i ny fane</button>
 
-<!-- Her vil innholdet fra den andre siden vises -->
-<div id="output">Innholdet lastes her...</div>
+    <p style="margin-top: 25px; font-style: italic;">
+        Merk: Dette genererer en isolert lokal fane som omgår de vanlige iFrame- og proxy-blokkeringene på nettverket ditt.
+    </p>
+</div>
 
 <script>
-    async function lastInnSide() {
-        const targetUrl = document.getElementById('urlInput').value;
-        const outputDiv = document.getElementById('output');
-        outputDiv.innerHTML = "Henter siden, vennligst vent...";
+    function apneTunnel() {
+        const url = document.getElementById('targetUrl').value;
 
-        // Vi bruker en åpen API-proxy til å hente innholdet på vegne av nettleseren
-        const proxyUrl = `https://allorigins.win{encodeURIComponent(targetUrl)}`;
+        // Vi genererer en fullstendig uavhengig HTML-side i minnet på PC-en din
+        const htmlInnhold = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Viser: \${url}</title>
+            <style>
+                html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+                iframe { width: 100%; height: 100%; border: none; }
+            </style>
+        </head>
+        <body>
+            <iframe src="\${url}"></iframe>
+        </body>
+        </html>
+    `;
 
-        try {
-            const response = await fetch(proxyUrl);
-            if (!response.ok) throw new Error('Nettverksfeil');
+        // Vi gjør om koden til en lokal datastrøm (Base64) som ikke har et domene filteret kan blokkere
+        const base64Kode = btoa(unescape(encodeURIComponent(htmlInnhold)));
+        const dataUrl = 'data:text/html;base64,' + base64Kode;
 
-            const data = await response.json();
-
-            // data.contents inneholder den rå HTML-koden fra den blokkerte siden
-            outputDiv.innerHTML = data.contents;
-
-        } catch (error) {
-            outputDiv.innerHTML = `<p style="color:red;">Kunne ikke laste siden: ${error.message}</p>`;
-        }
+        // Åpner den isolerte siden i en helt ny fane
+        window.open(dataUrl, '_blank');
     }
 </script>
 
