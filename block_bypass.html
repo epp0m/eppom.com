@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Min GitHub Proxy</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        #output { width: 100%; height: 600px; border: 1px solid #ccc; margin-top: 20px; overflow: auto; padding: 10px; }
+        input { width: 300px; padding: 8px; }
+        button { padding: 8px 15px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<h1>Vis nettsider via GitHub</h1>
+<p>Skriv inn nettadressen til den blokkerte siden:</p>
+
+<input type="text" id="urlInput" value="https://example.com">
+<button onclick="lastInnSide()">Åpne side</button>
+
+<!-- Her vil innholdet fra den andre siden vises -->
+<div id="output">Innholdet lastes her...</div>
+
+<script>
+    async function lastInnSide() {
+        const targetUrl = document.getElementById('urlInput').value;
+        const outputDiv = document.getElementById('output');
+        outputDiv.innerHTML = "Henter siden, vennligst vent...";
+
+        // Vi bruker en åpen API-proxy til å hente innholdet på vegne av nettleseren
+        const proxyUrl = `https://allorigins.win{encodeURIComponent(targetUrl)}`;
+
+        try {
+            const response = await fetch(proxyUrl);
+            if (!response.ok) throw new Error('Nettverksfeil');
+
+            const data = await response.json();
+
+            // data.contents inneholder den rå HTML-koden fra den blokkerte siden
+            outputDiv.innerHTML = data.contents;
+
+        } catch (error) {
+            outputDiv.innerHTML = `<p style="color:red;">Kunne ikke laste siden: ${error.message}</p>`;
+        }
+    }
+</script>
+
+</body>
+</html>
