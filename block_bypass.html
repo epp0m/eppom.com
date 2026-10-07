@@ -3,59 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub Portal</title>
+    <title>Web Viewer via GitHub</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; background-color: #f4f6f9; color: #333; text-align: center; }
-        .container { max-width: 500px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h1 { margin-bottom: 20px; color: #007bff; }
-        input { width: 80%; padding: 12px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 20px; font-size: 16px; }
-        button { padding: 12px 24px; background-color: #007bff; color: white; border: none; border-radius: 4px; font-size: 16px; cursor: pointer; font-weight: bold; }
-        button:hover { background-color: #0056b3; }
-        p { font-size: 14px; color: #666; line-height: 1.5; }
+        body { font-family: system-ui, sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; background: #f5f5f7; }
+        .control-panel { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; }
+        input { width: 350px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        button { padding: 10px 20px; background: #0071e3; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        button:hover { background: #0077ed; }
+        iframe { flex-grow: 1; width: 100%; border: 1px solid #ddd; border-radius: 8px; background: white; }
+        #status { font-size: 14px; margin-top: 8px; font-weight: 500; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Nettportal</h1>
-    <p>Skriv inn den fullstendige adressen du vil åpne (inkludert https://):</p>
-
-    <input type="text" id="targetUrl" value="https://example.com">
-    <br>
-    <button onclick="apneTunnel()">Åpne i ny fane</button>
-
-    <p style="margin-top: 25px; font-style: italic;">
-        Merk: Dette genererer en isolert lokal fane som omgår de vanlige iFrame- og proxy-blokkeringene på nettverket ditt.
-    </p>
+<div class="control-panel">
+    <h2>Se nettsider via GitHub Pages</h2>
+    <input type="text" id="urlInput" value="https://example.com" placeholder="Skriv nettadresse her...">
+    <button onclick="lastInnSide()">Last inn nettside</button>
+    <div id="status" style="color: #555;">Klar</div>
 </div>
 
+<!-- Sandboxed iframe for å hindre at den eksterne siden låser eller overtar fanen din -->
+<iframe id="viewerFrame" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+
 <script>
-    function apneTunnel() {
-        const url = document.getElementById('targetUrl').value;
+    async function lastInnSide() {
+        let targetUrl = document.getElementById('urlInput').value.trim();
+        const statusDiv = document.getElementById('status');
+        const iframe = document.getElementById('viewerFrame');
 
-        // Vi genererer en fullstendig uavhengig HTML-side i minnet på PC-en din
-        const htmlInnhold = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Viser: \${url}</title>
-            <style>
-                html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
-                iframe { width: 100%; height: 100%; border: none; }
-            </style>
-        </head>
-        <body>
-            <iframe src="\${url}"></iframe>
-        </body>
-        </html>
-    `;
+        if (!targetUrl) return;
 
-        // Vi gjør om koden til en lokal datastrøm (Base64) som ikke har et domene filteret kan blokkere
-        const base64Kode = btoa(unescape(encodeURIComponent(htmlInnhold)));
-        const dataUrl = 'data:text/html;base64,' + base64Kode;
+        // Sørg for riktig URL-format
+        if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
+            targetUrl = 'https://' + targetUrl;
+        }
 
-        // Åpner den isolerte siden i en helt ny fane
-        window.open(dataUrl, '_blank');
+        statusDiv.innerText = "Kobler til og henter innhold...";
+        statusDiv.style.color = "#0071e3";
+
+        // Vi bruker en stabil, åpen CORS-proxy som leverer rådata direkte
+        const proxyUrl = `https://corsproxy.io{encodeURIComponent(targetUrl)}`;
+
+        try {
+            const response = await fetch(proxyUrl);
+
+            if (!response.ok) {
+                throw new Error(`Proxyen svarte med status ${response.status}`);
+            }
+
+            let htmlText = await response.text();
+
+            if (!htmlText || htmlText.length < 10) {
+                throw new Error("Siden returnerte tomt eller for lite innhold.");
+            }
+
+            statusDiv.innerText = "Innhold hentet! Genererer visning...";
+            statusDiv.style.color = "green";
+
+            // For å unngå "hvit skjerm" på grunn av sikkerhet, gjør vi koden om til et Blob-objekt
+            const blob = new Blob([htmlText], { type: 'text/html' });
+            const blobUrl = URL.createObjectURL(blob);
+
+            // Sett iFramen til å laste vår nyskapte Blob-adresse
+            iframe.src = blobUrl;
+
+            statusDiv.innerText = `Viser innhold fra: ${targetUrl}`;
+
+        } catch (error) {
+            console.error(error);
+            statusDiv.innerText = `Feil: Koden klarte ikke å hente siden. (${error.message})`;
+            statusDiv.style.color = "red";
+        }
     }
 </script>
 
