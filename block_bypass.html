@@ -2,80 +2,23 @@
 <html lang="no">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Viewer via GitHub</title>
-    <style>
-        body { font-family: system-ui, sans-serif; margin: 0; padding: 20px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; background: #f5f5f7; }
-        .control-panel { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 15px; }
-        input { width: 350px; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
-        button { padding: 10px 20px; background: #0071e3; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 14px; }
-        button:hover { background: #0077ed; }
-        iframe { flex-grow: 1; width: 100%; border: 1px solid #ddd; border-radius: 8px; background: white; }
-        #status { font-size: 14px; margin-top: 8px; font-weight: 500; }
-    </style>
+    <title>Min Nettside</title>
 </head>
 <body>
 
-<div class="control-panel">
-    <h2>Se nettsider via GitHub Pages</h2>
-    <input type="text" id="urlInput" value="https://example.com" placeholder="Skriv nettadresse her...">
-    <button onclick="lastInnSide()">Last inn nettside</button>
-    <div id="status" style="color: #555;">Klar</div>
-</div>
+<h1>Her er innholdet fra den andre siden:</h1>
 
-<!-- Sandboxed iframe for å hindre at den eksterne siden låser eller overtar fanen din -->
-<iframe id="viewerFrame" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+<!-- Boksen hvor den eksterne siden skal vises -->
+<div id="eksternt-innhold">Laster innhold...</div>
 
 <script>
-    async function lastInnSide() {
-        let targetUrl = document.getElementById('urlInput').value.trim();
-        const statusDiv = document.getElementById('status');
-        const iframe = document.getElementById('viewerFrame');
-
-        if (!targetUrl) return;
-
-        // Sørg for riktig URL-format
-        if (!targetUrl.startsWith('http://') && !targetUrl.startsWith('https://')) {
-            targetUrl = 'https://' + targetUrl;
-        }
-
-        statusDiv.innerText = "Kobler til og henter innhold...";
-        statusDiv.style.color = "#0071e3";
-
-        // Vi bruker en stabil, åpen CORS-proxy som leverer rådata direkte
-        const proxyUrl = `https://corsproxy.io{encodeURIComponent(targetUrl)}`;
-
-        try {
-            const response = await fetch(proxyUrl);
-
-            if (!response.ok) {
-                throw new Error(`Proxyen svarte med status ${response.status}`);
-            }
-
-            let htmlText = await response.text();
-
-            if (!htmlText || htmlText.length < 10) {
-                throw new Error("Siden returnerte tomt eller for lite innhold.");
-            }
-
-            statusDiv.innerText = "Innhold hentet! Genererer visning...";
-            statusDiv.style.color = "green";
-
-            // For å unngå "hvit skjerm" på grunn av sikkerhet, gjør vi koden om til et Blob-objekt
-            const blob = new Blob([htmlText], { type: 'text/html' });
-            const blobUrl = URL.createObjectURL(blob);
-
-            // Sett iFramen til å laste vår nyskapte Blob-adresse
-            iframe.src = blobUrl;
-
-            statusDiv.innerText = `Viser innhold fra: ${targetUrl}`;
-
-        } catch (error) {
-            console.error(error);
-            statusDiv.innerText = `Feil: Koden klarte ikke å hente siden. (${error.message})`;
-            statusDiv.style.color = "red";
-        }
-    }
+    // Hent koden som PHP-proxyen har lastet ned
+    fetch('proxy.php')
+        .then(response => response.text())
+        .then(data => {
+            document.getElementById('eksternt-innhold').innerHTML = data;
+        })
+        .catch(error => console.error('Feil under lasting:', error));
 </script>
 
 </body>
