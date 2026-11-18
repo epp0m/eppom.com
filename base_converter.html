@@ -20,9 +20,6 @@
         <li id="HomeBtn">
             <a href="index.html">Home</a>
         </li>
-        <li id="AboutBtn">
-            <a href="index.html">testin</a>
-        </li>
         <li id="BaseBtn">
             <a href="base_converter.html">Base-conv</a>
         </li>
@@ -33,8 +30,6 @@
     <h1>Base convertor!</h1>
     <p>Convert between any base you want, this does in fact include negative bases. it works with bases up to base 64* most of the credit for the convertor goes to Leagues</p>
 
-    <div class="input-box">
-
         <label for="numberInput"></label><input type="text" id="numberInput" placeholder="Enter a number">
         <label for="numberBase"></label><input type="number" id="numberBase" placeholder="Enter base of number">
         <label for="convBase"></label><input type="number" id="convBase" placeholder="Enter base to convert to">
@@ -42,11 +37,24 @@
         <button id="submitBtn" onclick="doStuff()">Submit</button>
 
     </div>
-    <p id="result">Result</p>
+    <p id="result">Result:</p>
 
     <p id="techWarning">*Technical warning, instead of using the standard character set for base 64 it uses 0-9 as the first characters so this is not compatible with browsers, API's, cryptography libraries and most other systems that uses base 64</p>
 
-</div>
 <script src="./script.js"></script>
 </body>
-</html>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>White Dots on Black Grid</title>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background-color: #000000;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.45) 1px, transparent 2px);
+            background-size: 25px 25px;
+        }
+    </style>
+</head>
+<body>
